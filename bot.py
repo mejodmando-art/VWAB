@@ -62,21 +62,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     settings = db.get_settings(chat_id)
 
-    welcome = f"""
-🤖 <b>بوت VWAP Trend Momentum</b>
+    welcome = (
+        "🤖 <b>بوت VWAP Trend Momentum</b>
 
-مرحباً! البوت جاهز للتداول التلقائي.
+"
+        "مرحباً! البوت جاهز للتداول التلقائي.
 
-📊 <b>الإعدادات الحالية:</b>
-• الزوج: <code>{settings['symbol']}</code>
-• التايم فريم: <code>{settings['timeframe']}</code>
-• مبلغ الصفقة: <code>${settings['trade_amount']}</code>
-• SL: <code>{settings['sl_mult']}x ATR</code>
-• TP: <code>{settings['tp_mult']}x ATR</code>
-• الحالة: <code>{'🟢 شغال' if settings['active'] else '🔴 متوقف'}</code>
+"
+        "📊 <b>الإعدادات الحالية:</b>
+"
+        f"• الزوج: <code>{settings['symbol']}</code>
+"
+        f"• التايم فريم: <code>{settings['timeframe']}</code>
+"
+        f"• مبلغ الصفقة: <code>${settings['trade_amount']}</code>
+"
+        f"• SL: <code>{settings['sl_mult']}x ATR</code>
+"
+        f"• TP: <code>{settings['tp_mult']}x ATR</code>
+"
+        f"• الحالة: <code>{'🟢 شغال' if settings['active'] else '🔴 متوقف'}</code>
 
-اختر من القائمة:
-"""
+"
+        "اختر من القائمة:"
+    )
     await update.message.reply_text(welcome, parse_mode="HTML", reply_markup=main_menu())
 
 async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -98,20 +107,29 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == "setup":
         settings = db.get_settings(chat_id)
-        text = f"""
-⚙️ <b>الإعدادات الحالية:</b>
+        text = (
+            "⚙️ <b>الإعدادات الحالية:</b>
 
-💵 مبلغ الصفقة: ${settings['trade_amount']}
-⏱️ التايم فريم: {settings['timeframe']}
-📈 الزوج: {settings['symbol']}
-🛑 SL: {settings['sl_mult']}x ATR
-🎯 TP: {settings['tp_mult']}x ATR
-📊 EMA: {settings['ema_len']}
-↩️ Pullback: {settings['pullback_dist']}%
-🔒 Long Only: {'نعم' if settings['long_only'] else 'لا'}
+"
+            f"💵 مبلغ الصفقة: ${settings['trade_amount']}
+"
+            f"⏱️ التايم فريم: {settings['timeframe']}
+"
+            f"📈 الزوج: {settings['symbol']}
+"
+            f"🛑 SL: {settings['sl_mult']}x ATR
+"
+            f"🎯 TP: {settings['tp_mult']}x ATR
+"
+            f"📊 EMA: {settings['ema_len']}
+"
+            f"↩️ Pullback: {settings['pullback_dist']}%
+"
+            f"🔒 Long Only: {'نعم' if settings['long_only'] else 'لا'}
 
-اضغط لتعديل:
-"""
+"
+            "اضغط لتعديل:"
+        )
         await query.edit_message_text(text, parse_mode="HTML", reply_markup=setup_menu())
 
     elif data == "balance":
@@ -127,20 +145,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not trades:
             text = "📋 لا توجد صفقات مفتوحة"
         else:
-            text = "📋 <b>الصفقات المفتوحة:</b>
-
-"
+            text = "📋 <b>الصفقات المفتوحة:</b>\n\n"
             for t in trades:
                 side_emoji = "🟢" if t[3] == 'LONG' else "🔴"
-                text += f"{side_emoji} <b>{t[3]}</b> {t[2]}
-"
-                text += f"الدخول: {float(t[4]):.4f}
-"
-                text += f"SL: {float(t[5]):.4f} | TP: {float(t[6]):.4f}
-"
-                text += f"الكمية: {float(t[7]):.4f}
-
-"
+                text += f"{side_emoji} <b>{t[3]}</b> {t[2]}\n"
+                text += f"الدخول: {float(t[4]):.4f}\n"
+                text += f"SL: {float(t[5]):.4f} | TP: {float(t[6]):.4f}\n"
+                text += f"الكمية: {float(t[7]):.4f}\n\n"
         await query.edit_message_text(text, parse_mode="HTML", reply_markup=main_menu())
 
     elif data == "history":
@@ -148,29 +159,23 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not trades:
             text = "📜 لا توجد صفقات سابقة"
         else:
-            text = "📜 <b>آخر 10 صفقات:</b>
-
-"
+            text = "📜 <b>آخر 10 صفقات:</b>\n\n"
             for t in trades:
                 side_emoji = "🟢" if t[3] == 'LONG' else "🔴"
                 status_emoji = "✅" if t[8] == 'CLOSED' else "⏳"
                 pnl = float(t[9]) if t[9] else 0
                 pnl_emoji = "🟢" if pnl > 0 else "🔴" if pnl < 0 else "⚪"
-                text += f"{status_emoji} {side_emoji} <b>{t[3]}</b> {t[2]} {pnl_emoji} {pnl:.2f}
-"
+                text += f"{status_emoji} {side_emoji} <b>{t[3]}</b> {t[2]} {pnl_emoji} {pnl:.2f}\n"
         await query.edit_message_text(text, parse_mode="HTML", reply_markup=main_menu())
 
     elif data == "start_bot":
         db.update_settings(chat_id, active=True)
-        await query.edit_message_text("✅ <b>البوت شغال!</b>
-سيبدأ فحص الإشارات تلقائياً.", parse_mode="HTML", reply_markup=main_menu())
-        # Start monitoring
+        await query.edit_message_text("✅ <b>البوت شغال!</b>\nسيبدأ فحص الإشارات تلقائياً.", parse_mode="HTML", reply_markup=main_menu())
         asyncio.create_task(monitor_trades(chat_id, context))
 
     elif data == "stop_bot":
         db.update_settings(chat_id, active=False)
-        await query.edit_message_text("⏹️ <b>البوت متوقف.</b>
-لن يتم فتح صفقات جديدة.", parse_mode="HTML", reply_markup=main_menu())
+        await query.edit_message_text("⏹️ <b>البوت متوقف.</b>\nلن يتم فتح صفقات جديدة.", parse_mode="HTML", reply_markup=main_menu())
 
     elif data == "manual_check":
         await query.edit_message_text("🔄 جاري الفحص...", reply_markup=main_menu())
@@ -180,36 +185,30 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Setup callbacks
     elif data == "set_amount":
         context.user_data['awaiting'] = 'amount'
-        await query.edit_message_text("💵 أرسل مبلغ الصفقة بالـ USDT:
-(مثال: 50)", reply_markup=setup_menu())
+        await query.edit_message_text("💵 أرسل مبلغ الصفقة بالـ USDT:\n(مثال: 50)", reply_markup=setup_menu())
 
     elif data == "set_timeframe":
         await query.edit_message_text("⏱️ اختر التايم فريم:", reply_markup=timeframe_menu())
 
     elif data == "set_symbol":
         context.user_data['awaiting'] = 'symbol'
-        await query.edit_message_text("📈 أرسل زوج التداول:
-(مثال: BTC_USDT)", reply_markup=setup_menu())
+        await query.edit_message_text("📈 أرسل زوج التداول:\n(مثال: BTC_USDT)", reply_markup=setup_menu())
 
     elif data == "set_sl":
         context.user_data['awaiting'] = 'sl'
-        await query.edit_message_text("🛑 أرسل مضاعف الستوب (x ATR):
-(مثال: 2.0)", reply_markup=setup_menu())
+        await query.edit_message_text("🛑 أرسل مضاعف الستوب (x ATR):\n(مثال: 2.0)", reply_markup=setup_menu())
 
     elif data == "set_tp":
         context.user_data['awaiting'] = 'tp'
-        await query.edit_message_text("🎯 أرسل مضاعف التيك بروفيت (x ATR):
-(مثال: 2.0)", reply_markup=setup_menu())
+        await query.edit_message_text("🎯 أرسل مضاعف التيك بروفيت (x ATR):\n(مثال: 2.0)", reply_markup=setup_menu())
 
     elif data == "set_ema":
         context.user_data['awaiting'] = 'ema'
-        await query.edit_message_text("📊 أرسل طول EMA:
-(مثال: 34)", reply_markup=setup_menu())
+        await query.edit_message_text("📊 أرسل طول EMA:\n(مثال: 34)", reply_markup=setup_menu())
 
     elif data == "set_pullback":
         context.user_data['awaiting'] = 'pullback'
-        await query.edit_message_text("↩️ أرسل نسبة الPullback %:
-(مثال: 0.15)", reply_markup=setup_menu())
+        await query.edit_message_text("↩️ أرسل نسبة الPullback %:\n(مثال: 0.15)", reply_markup=setup_menu())
 
     elif data == "toggle_longonly":
         settings = db.get_settings(chat_id)
@@ -282,20 +281,18 @@ async def show_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         balance = "❌"
         price = "❌"
 
-    text = f"""
-📊 <b>حالة البوت</b>
-
-🟢 الحالة: {'شغال' if settings['active'] else 'متوقف'}
-💰 الرصيد: <code>{balance if isinstance(balance, str) else f'{balance:.2f} USDT'}</code>
-📈 السعر الحالي: <code>{price if isinstance(price, str) else f'{price:.4f}'}</code>
-📋 صفقات مفتوحة: {len(open_trades)}
-📊 صفقات اليوم: {daily_count}/{settings['max_trades_day']}
-
-⚙️ الإعدادات:
-• الزوج: {settings['symbol']} | TF: {settings['timeframe']}
-• المبلغ: ${settings['trade_amount']}
-• SL: {settings['sl_mult']}x | TP: {settings['tp_mult']}x
-"""
+    text = (
+        "📊 <b>حالة البوت</b>\n\n"
+        f"🟢 الحالة: {'شغال' if settings['active'] else 'متوقف'}\n"
+        f"💰 الرصيد: <code>{balance if isinstance(balance, str) else f'{balance:.2f} USDT'}</code>\n"
+        f"📈 السعر الحالي: <code>{price if isinstance(price, str) else f'{price:.4f}'}</code>\n"
+        f"📋 صفقات مفتوحة: {len(open_trades)}\n"
+        f"📊 صفقات اليوم: {daily_count}/{settings['max_trades_day']}\n\n"
+        "⚙️ الإعدادات:\n"
+        f"• الزوج: {settings['symbol']} | TF: {settings['timeframe']}\n"
+        f"• المبلغ: ${settings['trade_amount']}\n"
+        f"• SL: {settings['sl_mult']}x | TP: {settings['tp_mult']}x"
+    )
 
     if hasattr(update, 'callback_query') and update.callback_query:
         await update.callback_query.edit_message_text(text, parse_mode="HTML", reply_markup=main_menu())
@@ -347,22 +344,19 @@ async def check_signal(chat_id: int) -> str:
             db.add_signal(chat_id, settings['symbol'], side, entry, result['vwap'], result['ema_slope'], result['atr'])
 
             emoji = "🟢" if side == 'LONG' else "🔴"
-            return f"""
-{emoji} <b>تم فتح صفقة {side}!</b>
-
-📈 الزوج: {settings['symbol']}
-💵 السعر: {entry:.4f}
-🛑 SL: {sl:.4f}
-🎯 TP: {tp:.4f}
-📊 ATR: {result['atr']:.4f}
-💰 الكمية: {amount:.6f}
-
-R:R = {settings['tp_mult']}/{settings['sl_mult']}:1
-"""
+            text = (
+                f"{emoji} <b>تم فتح صفقة {side}!</b>\n\n"
+                f"📈 الزوج: {settings['symbol']}\n"
+                f"💵 السعر: {entry:.4f}\n"
+                f"🛑 SL: {sl:.4f}\n"
+                f"🎯 TP: {tp:.4f}\n"
+                f"📊 ATR: {result['atr']:.4f}\n"
+                f"💰 الكمية: {amount:.6f}\n\n"
+                f"R:R = {settings['tp_mult']}/{settings['sl_mult']}:1"
+            )
+            return text
         else:
-            return f"⏳ لا يوجد إشارة حالياً
-
-{result['reason']}"
+            return f"⏳ لا يوجد إشارة حالياً\n\n{result['reason']}"
 
     except Exception as e:
         return f"❌ خطأ: {str(e)}"
@@ -405,14 +399,12 @@ async def monitor_trades(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
                         db.close_trade(trade_id, current_price, pnl)
 
                         emoji = "🔴" if hit_sl else "🟢"
-                        result_text = f"{emoji} <b>تم إغلاق الصفقة!</b>
-
-"
-                        result_text += f"{'SL' if hit_sl else 'TP'} تم التفعيل
-"
-                        result_text += f"السعر: {current_price:.4f}
-"
-                        result_text += f"PNL: {pnl:.2f} USDT"
+                        result_text = (
+                            f"{emoji} <b>تم إغلاق الصفقة!</b>\n\n"
+                            f"{'SL' if hit_sl else 'TP'} تم التفعيل\n"
+                            f"السعر: {current_price:.4f}\n"
+                            f"PNL: {pnl:.2f} USDT"
+                        )
 
                         await context.bot.send_message(chat_id=chat_id, text=result_text, parse_mode="HTML")
 
