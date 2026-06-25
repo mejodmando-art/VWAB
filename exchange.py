@@ -30,7 +30,6 @@ class GateIO:
         }
 
     def get_balance(self):
-        path = "/spot/accounts"
         headers = self._sign("GET", "/api/v4/spot/accounts")
         resp = requests.get(self.BASE_URL + "/spot/accounts", headers=headers, timeout=10)
         data = resp.json()
