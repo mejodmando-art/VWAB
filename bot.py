@@ -16,47 +16,47 @@ gateio = GateIO()
 
 def main_menu():
     keyboard = [
-        [InlineKeyboardButton("Status", callback_data="status"),
-         InlineKeyboardButton("Settings", callback_data="setup")],
-        [InlineKeyboardButton("Balance", callback_data="balance"),
-         InlineKeyboardButton("Open Trades", callback_data="open_trades")],
-        [InlineKeyboardButton("History", callback_data="history"),
-         InlineKeyboardButton("Start", callback_data="start_bot"),
-         InlineKeyboardButton("Stop", callback_data="stop_bot")],
-        [InlineKeyboardButton("Manual Check", callback_data="manual_check")]
+        [InlineKeyboardButton("📊 الحالة", callback_data="status"),
+         InlineKeyboardButton("⚙️ الإعدادات", callback_data="setup")],
+        [InlineKeyboardButton("💰 الرصيد", callback_data="balance"),
+         InlineKeyboardButton("📋 الصفقات", callback_data="open_trades")],
+        [InlineKeyboardButton("📜 السجل", callback_data="history"),
+         InlineKeyboardButton("▶️ تشغيل", callback_data="start_bot"),
+         InlineKeyboardButton("⏹️ إيقاف", callback_data="stop_bot")],
+        [InlineKeyboardButton("🔄 فحص", callback_data="manual_check")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def setup_menu():
     keyboard = [
-        [InlineKeyboardButton("Trade Amount", callback_data="set_amount"),
-         InlineKeyboardButton("Timeframe", callback_data="set_timeframe")],
-        [InlineKeyboardButton("Symbol", callback_data="set_symbol"),
-         InlineKeyboardButton("SL Multiplier", callback_data="set_sl")],
-        [InlineKeyboardButton("TP Multiplier", callback_data="set_tp"),
-         InlineKeyboardButton("EMA Length", callback_data="set_ema")],
-        [InlineKeyboardButton("Pullback %", callback_data="set_pullback"),
-         InlineKeyboardButton("Long Only", callback_data="toggle_longonly")],
-        [InlineKeyboardButton("Back", callback_data="main_menu")]
+        [InlineKeyboardButton("💵 المبلغ", callback_data="set_amount"),
+         InlineKeyboardButton("⏱️ التايم", callback_data="set_timeframe")],
+        [InlineKeyboardButton("📈 الزوج", callback_data="set_symbol"),
+         InlineKeyboardButton("🛑 الستوب", callback_data="set_sl")],
+        [InlineKeyboardButton("🎯 التيك", callback_data="set_tp"),
+         InlineKeyboardButton("📊 EMA", callback_data="set_ema")],
+        [InlineKeyboardButton("↩️ Pullback", callback_data="set_pullback"),
+         InlineKeyboardButton("🔒 Long", callback_data="toggle_longonly")],
+        [InlineKeyboardButton("🔙 رجوع", callback_data="main_menu")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def timeframe_menu():
     keyboard = [
-        [InlineKeyboardButton("1m", callback_data="tf_1m"),
-         InlineKeyboardButton("5m", callback_data="tf_5m"),
-         InlineKeyboardButton("15m", callback_data="tf_15m")],
-        [InlineKeyboardButton("30m", callback_data="tf_30m"),
-         InlineKeyboardButton("1h", callback_data="tf_1h"),
-         InlineKeyboardButton("4h", callback_data="tf_4h")],
-        [InlineKeyboardButton("Back", callback_data="setup")]
+        [InlineKeyboardButton("1د", callback_data="tf_1m"),
+         InlineKeyboardButton("5د", callback_data="tf_5m"),
+         InlineKeyboardButton("15د", callback_data="tf_15m")],
+        [InlineKeyboardButton("30د", callback_data="tf_30m"),
+         InlineKeyboardButton("1س", callback_data="tf_1h"),
+         InlineKeyboardButton("4س", callback_data="tf_4h")],
+        [InlineKeyboardButton("🔙 رجوع", callback_data="setup")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     settings = db.get_settings(chat_id)
-    welcome = "Bot VWAP Trend Momentum" + chr(10) + chr(10) + "Settings:" + chr(10) + "Symbol: " + settings["symbol"] + chr(10) + "Timeframe: " + settings["timeframe"] + chr(10) + "Amount: $" + str(settings["trade_amount"]) + chr(10) + "SL: " + str(settings["sl_mult"]) + "x ATR" + chr(10) + "TP: " + str(settings["tp_mult"]) + "x ATR" + chr(10) + "Status: " + ("Running" if settings["active"] else "Stopped")
+    welcome = "🤖 بوت VWAP" + chr(10) + chr(10) + "⚙️ الإعدادات:" + chr(10) + "Symbol: " + settings["symbol"] + chr(10) + "⏱️ التايم فريم: " + settings["timeframe"] + chr(10) + "Amount: $" + str(settings["trade_amount"]) + chr(10) + "SL: " + str(settings["sl_mult"]) + "x ATR" + chr(10) + "TP: " + str(settings["tp_mult"]) + "x ATR" + chr(10) + "Status: " + ("🟢 شغال" if settings["active"] else "🔴 متوقف")
     await update.message.reply_text(welcome, reply_markup=main_menu())
 
 async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -69,70 +69,70 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
 
     if data == "main_menu":
-        await query.edit_message_text("Main Menu:", reply_markup=main_menu())
+        await query.edit_message_text("القائمة الرئيسية:", reply_markup=main_menu())
     elif data == "status":
         await show_status(update, context)
     elif data == "setup":
         settings = db.get_settings(chat_id)
-        text = "Settings:" + chr(10) + "Amount: $" + str(settings["trade_amount"]) + chr(10) + "TF: " + settings["timeframe"] + chr(10) + "Symbol: " + settings["symbol"] + chr(10) + "SL: " + str(settings["sl_mult"]) + "x" + chr(10) + "TP: " + str(settings["tp_mult"]) + "x" + chr(10) + "EMA: " + str(settings["ema_len"]) + chr(10) + "Pullback: " + str(settings["pullback_dist"]) + "%" + chr(10) + "Long Only: " + ("Yes" if settings["long_only"] else "No") + chr(10) + chr(10) + "Click to edit:"
+        text = "⚙️ الإعدادات:" + chr(10) + "Amount: $" + str(settings["trade_amount"]) + chr(10) + "TF: " + settings["timeframe"] + chr(10) + "Symbol: " + settings["symbol"] + chr(10) + "SL: " + str(settings["sl_mult"]) + "x" + chr(10) + "TP: " + str(settings["tp_mult"]) + "x" + chr(10) + "EMA: " + str(settings["ema_len"]) + chr(10) + "Pullback: " + str(settings["pullback_dist"]) + "%" + chr(10) + "Long Only: " + ("Yes" if settings["long_only"] else "No") + chr(10) + chr(10) + "Click to edit:"
         await query.edit_message_text(text, reply_markup=setup_menu())
     elif data == "balance":
         try:
             balance = gateio.get_balance()
             text = "USDT Balance: " + str(round(balance, 2))
         except Exception as e:
-            text = "Error: " + str(e)
+            text = "❌ خطأ: " + str(e)
         await query.edit_message_text(text, reply_markup=main_menu())
     elif data == "open_trades":
         trades = db.get_open_trades(chat_id)
         if not trades:
-            text = "No open trades"
+            text = "📋 لا توجد صفقات"
         else:
-            text = "Open Trades:" + chr(10) + chr(10)
+            text = "📋 الصفقات المفتوحة:" + chr(10) + chr(10)
             for t in trades:
                 text += t[3] + " " + t[2] + chr(10) + "Entry: " + str(round(float(t[4]), 4)) + chr(10) + "SL: " + str(round(float(t[5]), 4)) + " | TP: " + str(round(float(t[6]), 4)) + chr(10) + "Qty: " + str(round(float(t[7]), 4)) + chr(10) + chr(10)
         await query.edit_message_text(text, reply_markup=main_menu())
     elif data == "history":
         trades = db.get_trade_history(chat_id, 10)
         if not trades:
-            text = "No trade history"
+            text = "📜 لا يوجد سجل"
         else:
-            text = "Last 10 Trades:" + chr(10) + chr(10)
+            text = "📜 آخر 10 صفقات:" + chr(10) + chr(10)
             for t in trades:
                 pnl = float(t[9]) if t[9] else 0
-                text += t[3] + " " + t[2] + " PNL: " + str(round(pnl, 2)) + chr(10)
+                text += t[3] + " " + t[2] + " ربح/خسارة: " + str(round(pnl, 2)) + chr(10)
         await query.edit_message_text(text, reply_markup=main_menu())
     elif data == "start_bot":
         db.update_settings(chat_id, active=True)
-        await query.edit_message_text("Bot Started!", reply_markup=main_menu())
+        await query.edit_message_text("✅ البوت شغال!", reply_markup=main_menu())
         asyncio.create_task(monitor_trades(chat_id, context))
     elif data == "stop_bot":
         db.update_settings(chat_id, active=False)
-        await query.edit_message_text("Bot Stopped!", reply_markup=main_menu())
+        await query.edit_message_text("⏹️ البوت متوقف!", reply_markup=main_menu())
     elif data == "manual_check":
-        await query.edit_message_text("Checking...", reply_markup=main_menu())
+        await query.edit_message_text("🔄 جاري الفحص...", reply_markup=main_menu())
         result = await check_signal(chat_id)
         await query.edit_message_text(result, reply_markup=main_menu())
     elif data == "set_amount":
         context.user_data["awaiting"] = "amount"
-        await query.edit_message_text("Send trade amount in USDT (e.g. 50):", reply_markup=setup_menu())
+        await query.edit_message_text("💵 أرسل المبلغ بالـ USDT (مثال: 50):", reply_markup=setup_menu())
     elif data == "set_timeframe":
-        await query.edit_message_text("Select timeframe:", reply_markup=timeframe_menu())
+        await query.edit_message_text("⏱️ اختر التايم فريم:", reply_markup=timeframe_menu())
     elif data == "set_symbol":
         context.user_data["awaiting"] = "symbol"
-        await query.edit_message_text("Send trading pair (e.g. BTC_USDT):", reply_markup=setup_menu())
+        await query.edit_message_text("📈 أرسل زوج التداول (مثال: BTC_USDT):", reply_markup=setup_menu())
     elif data == "set_sl":
         context.user_data["awaiting"] = "sl"
-        await query.edit_message_text("Send SL multiplier (e.g. 2.0):", reply_markup=setup_menu())
+        await query.edit_message_text("🛑 أرسل مضاعف الستوب (مثال: 2.0):", reply_markup=setup_menu())
     elif data == "set_tp":
         context.user_data["awaiting"] = "tp"
-        await query.edit_message_text("Send TP multiplier (e.g. 2.0):", reply_markup=setup_menu())
+        await query.edit_message_text("🎯 أرسل مضاعف التيك (مثال: 2.0):", reply_markup=setup_menu())
     elif data == "set_ema":
         context.user_data["awaiting"] = "ema"
-        await query.edit_message_text("Send EMA length (e.g. 34):", reply_markup=setup_menu())
+        await query.edit_message_text("📊 أرسل طول EMA (مثال: 34):", reply_markup=setup_menu())
     elif data == "set_pullback":
         context.user_data["awaiting"] = "pullback"
-        await query.edit_message_text("Send pullback % (e.g. 0.15):", reply_markup=setup_menu())
+        await query.edit_message_text("↩️ أرسل نسبة Pullback (مثال: 0.15):", reply_markup=setup_menu())
     elif data == "toggle_longonly":
         settings = db.get_settings(chat_id)
         new_val = not settings["long_only"]
@@ -141,13 +141,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data.startswith("tf_"):
         tf = data.replace("tf_", "")
         db.update_settings(chat_id, timeframe=tf)
-        await query.edit_message_text("Timeframe: " + tf, reply_markup=setup_menu())
+        await query.edit_message_text("⏱️ التايم فريم: " + tf, reply_markup=setup_menu())
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     text = update.message.text
     if "awaiting" not in context.user_data:
-        await update.message.reply_text("Use menu:", reply_markup=main_menu())
+        await update.message.reply_text("استخدم القائمة:", reply_markup=main_menu())
         return
     awaiting = context.user_data["awaiting"]
     del context.user_data["awaiting"]
@@ -155,28 +155,28 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if awaiting == "amount":
             val = float(text)
             db.update_settings(chat_id, trade_amount=val)
-            await update.message.reply_text("Amount set: $" + str(val), reply_markup=setup_menu())
+            await update.message.reply_text("✅ المبلغ: $" + str(val), reply_markup=setup_menu())
         elif awaiting == "symbol":
             db.update_settings(chat_id, symbol=text.upper())
-            await update.message.reply_text("Symbol set: " + text.upper(), reply_markup=setup_menu())
+            await update.message.reply_text("✅ الزوج: " + text.upper(), reply_markup=setup_menu())
         elif awaiting == "sl":
             val = float(text)
             db.update_settings(chat_id, sl_mult=val)
-            await update.message.reply_text("SL set: " + str(val) + "x ATR", reply_markup=setup_menu())
+            await update.message.reply_text("✅ SL: " + str(val) + "x ATR", reply_markup=setup_menu())
         elif awaiting == "tp":
             val = float(text)
             db.update_settings(chat_id, tp_mult=val)
-            await update.message.reply_text("TP set: " + str(val) + "x ATR", reply_markup=setup_menu())
+            await update.message.reply_text("✅ TP: " + str(val) + "x ATR", reply_markup=setup_menu())
         elif awaiting == "ema":
             val = int(text)
             db.update_settings(chat_id, ema_len=val)
-            await update.message.reply_text("EMA set: " + str(val), reply_markup=setup_menu())
+            await update.message.reply_text("✅ EMA: " + str(val), reply_markup=setup_menu())
         elif awaiting == "pullback":
             val = float(text)
             db.update_settings(chat_id, pullback_dist=val)
-            await update.message.reply_text("Pullback set: " + str(val) + "%", reply_markup=setup_menu())
+            await update.message.reply_text("✅ Pullback: " + str(val) + "%", reply_markup=setup_menu())
     except ValueError:
-        await update.message.reply_text("Invalid value, try again:", reply_markup=setup_menu())
+        await update.message.reply_text("❌ قيمة غير صحيحة، جرب مرة أخرى:", reply_markup=setup_menu())
 
 async def show_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -189,7 +189,7 @@ async def show_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except:
         balance = "Error"
         price = "Error"
-    text = "Bot Status" + chr(10) + chr(10) + "Status: " + ("Running" if settings["active"] else "Stopped") + chr(10) + "Balance: " + (str(balance) if isinstance(balance, str) else str(round(balance, 2)) + " USDT") + chr(10) + "Price: " + (str(price) if isinstance(price, str) else str(round(price, 4))) + chr(10) + "Open Trades: " + str(len(open_trades)) + chr(10) + "Daily Trades: " + str(daily_count) + "/" + str(settings["max_trades_day"]) + chr(10) + chr(10) + "Settings:" + chr(10) + "Symbol: " + settings["symbol"] + " | TF: " + settings["timeframe"] + chr(10) + "Amount: $" + str(settings["trade_amount"]) + chr(10) + "SL: " + str(settings["sl_mult"]) + "x | TP: " + str(settings["tp_mult"]) + "x"
+    text = "📊 حالة البوت" + chr(10) + chr(10) + "Status: " + ("🟢 شغال" if settings["active"] else "🔴 متوقف") + chr(10) + "Balance: " + (str(balance) if isinstance(balance, str) else str(round(balance, 2)) + " USDT") + chr(10) + "Price: " + (str(price) if isinstance(price, str) else str(round(price, 4))) + chr(10) + "📋 صفقات مفتوحة: " + str(len(open_trades)) + chr(10) + "📊 صفقات اليوم: " + str(daily_count) + "/" + str(settings["max_trades_day"]) + chr(10) + chr(10) + "⚙️ الإعدادات:" + chr(10) + "Symbol: " + settings["symbol"] + " | TF: " + settings["timeframe"] + chr(10) + "Amount: $" + str(settings["trade_amount"]) + chr(10) + "SL: " + str(settings["sl_mult"]) + "x | TP: " + str(settings["tp_mult"]) + "x"
     if hasattr(update, "callback_query") and update.callback_query:
         await update.callback_query.edit_message_text(text, reply_markup=main_menu())
     else:
@@ -198,17 +198,17 @@ async def show_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def check_signal(chat_id: int) -> str:
     settings = db.get_settings(chat_id)
     if not settings["active"]:
-        return "Bot is stopped"
+        return "🔴 البوت متوقف"
     daily_count = db.get_daily_count(chat_id)
     if daily_count >= settings["max_trades_day"]:
-        return "Max daily trades reached: " + str(settings["max_trades_day"])
+        return "⏳ وصلت للحد الأقصى: " + str(settings["max_trades_day"])
     open_trades = db.get_open_trades(chat_id)
     if open_trades:
-        return str(len(open_trades)) + " open trades - waiting for close"
+        return str(len(open_trades)) + " صفقات مفتوحة - انتظار الإغلاق"
     try:
         candles = gateio.get_klines(settings["symbol"], settings["timeframe"], 200)
         if len(candles) < 100:
-            return "Insufficient data"
+            return "❌ بيانات غير كافية"
         strategy = VWAPStrategy(
             ema_len=settings["ema_len"],
             sl_mult=settings["sl_mult"],
@@ -227,11 +227,11 @@ async def check_signal(chat_id: int) -> str:
             trade_id = db.add_trade(chat_id, settings["symbol"], side, entry, sl, tp, amount)
             db.increment_daily_count(chat_id)
             db.add_signal(chat_id, settings["symbol"], side, entry, result["vwap"], result["ema_slope"], result["atr"])
-            return side + " trade opened!" + chr(10) + "Symbol: " + settings["symbol"] + chr(10) + "Entry: " + str(round(entry, 4)) + chr(10) + "SL: " + str(round(sl, 4)) + chr(10) + "TP: " + str(round(tp, 4)) + chr(10) + "ATR: " + str(round(result["atr"], 4)) + chr(10) + "Qty: " + str(round(amount, 6)) + chr(10) + "R:R = " + str(settings["tp_mult"]) + ":" + str(settings["sl_mult"])
+            return side + " صفقة مفتوحة!" + chr(10) + "Symbol: " + settings["symbol"] + chr(10) + "Entry: " + str(round(entry, 4)) + chr(10) + "SL: " + str(round(sl, 4)) + chr(10) + "TP: " + str(round(tp, 4)) + chr(10) + "ATR: " + str(round(result["atr"], 4)) + chr(10) + "Qty: " + str(round(amount, 6)) + chr(10) + "R:R = " + str(settings["tp_mult"]) + ":" + str(settings["sl_mult"])
         else:
-            return "No signal. " + result["reason"]
+            return "⏳ لا يوجد إشارة. " + result["reason"]
     except Exception as e:
-        return "Error: " + str(e)
+        return "❌ خطأ: " + str(e)
 
 async def monitor_trades(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
     while True:
@@ -261,11 +261,11 @@ async def monitor_trades(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
                         gateio.place_order(settings["symbol"], close_side, amount)
                         pnl = (current_price - entry) * amount if side == "LONG" else (entry - current_price) * amount
                         db.close_trade(trade_id, current_price, pnl)
-                        result_text = "Trade closed! " + ("SL" if hit_sl else "TP") + " hit. Price: " + str(round(current_price, 4)) + " PNL: " + str(round(pnl, 2)) + " USDT"
+                        result_text = "✅ تم إغلاق الصفقة! " + ("SL" if hit_sl else "TP") + " تم التفعيل. السعر: " + str(round(current_price, 4)) + " ربح/خسارة: " + str(round(pnl, 2)) + " USDT"
                         await context.bot.send_message(chat_id=chat_id, text=result_text)
             await asyncio.sleep(60)
         except Exception as e:
-            logger.error("Monitor error: " + str(e))
+            logger.error("خطأ في المراقبة: " + str(e))
             await asyncio.sleep(60)
 
 def main():
