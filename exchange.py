@@ -15,11 +15,8 @@ class GateIO:
     def _sign(self, method, url_path, query_string="", body=""):
         t = str(int(time.time()))
         hashed_payload = hashlib.sha512(body.encode("utf-8")).hexdigest()
-        signature_string = method + "
-" + url_path + "
-" + query_string + "
-" + hashed_payload + "
-" + t
+        nl = chr(10)
+        signature_string = method + nl + url_path + nl + query_string + nl + hashed_payload + nl + t
         signature = hmac.new(
             self.api_secret.encode("utf-8"),
             signature_string.encode("utf-8"),
