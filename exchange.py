@@ -38,7 +38,26 @@ class GateIO:
                 return float(acc.get("available", 0))
         return 0.0
 
-    def get_klines(self, symbol, interval="15m", limit=200):
+    def get_top_coins(self, limit=100):
+        """Get top coins by volume"""
+        resp = requests.get(self.BASE_URL + "/spot/tickers", timeout=10)
+        data = resp.json()
+        coins = []
+        for item in data:
+            symbol = item.get("currency_pair", "")
+            if symbol.endswith("_USDT") and not symbol.startswith("3") and not symbol.startswith("5"):
+                volume = float(item.get("quote_volume", 0))
+                price = float(item.get("last", 0))
+                if volume > 1000000 and price > 0.01:  # Min 1M volume, price > 0.01
+                    coins.append({
+                        "symbol": symbol,
+                        "volume": volume,
+                        "price": price
+                    })
+        coins.sort(key=lambda x: x["volume"], reverse=True)
+        return coins[:limit]
+
+    def get_klines(self, symbol, interval="1h", limit=200):
         params = {"currency_pair": symbol, "interval": interval, "limit": limit}
         resp = requests.get(self.BASE_URL + "/spot/candlesticks", params=params, timeout=10)
         data = resp.json()
@@ -75,14 +94,12 @@ class GateIO:
         resp = requests.post(self.BASE_URL + "/spot/orders", headers=headers, data=body, timeout=10)
         return resp.json()
 
-    def get_open_orders(self, symbol):
-        params = "currency_pair=" + symbol
-        headers = self._sign("GET", "/api/v4/spot/open_orders", params)
-        resp = requests.get(self.BASE_URL + "/spot/open_orders?" + params, headers=headers, timeout=10)
-        return resp.json()
-
-    def cancel_order(self, order_id, symbol):
-        body = json.dumps({"currency_pair": symbol})
-        headers = self._sign("DELETE", "/api/v4/spot/orders/" + order_id, "currency_pair=" + symbol, body)
-        resp = requests.delete(self.BASE_URL + "/spot/orders/" + order_id, headers=headers, data=body, timeout=10)
+    def get_open_orders(self, symbol=None):
+        if symbol:
+            params = "currency_pair=" + symbol
+            headers = self._sign("GET", "/api/v4/spot/open_orders", params)
+            resp = requests.get(self.BASE_URL + "/spot/open_orders?" + params, headers=headers, timeout=10)
+        else:
+            headers = self._sign("GET", "/api/v4/spot/open_orders")
+            resp = requests.get(self.BASE_URL + "/spot/open_orders", headers=headers, timeout=10)
         return resp.json()

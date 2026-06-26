@@ -1,6 +1,7 @@
-# VWAP Trend Momentum Bot
+# VWAP Trend Momentum Bot - Final Version
 
-Auto trading bot for Gate.io using VWAP + EMA + ATR strategy.
+Auto trading bot for Gate.io Spot using VWAP + EMA + ATR strategy.
+Scans top 100 coins and auto-enters trades.
 
 ## Railway Variables (5 only)
 
@@ -12,40 +13,34 @@ Auto trading bot for Gate.io using VWAP + EMA + ATR strategy.
 | GATEIO_API_SECRET | Gate.io API | API Secret |
 | DATABASE_URL | Supabase/Neon | Database URL |
 
-## Setup
+## Features
 
-1. Create bot with @BotFather, get token
-2. Get chat ID from @userinfobot
-3. Create API keys on Gate.io (Spot Trade + Read Only)
-4. Create database on Supabase or Neon
-5. Deploy to Railway with the 5 variables
+- Scans top 100 coins by volume
+- Auto-enters trades on signals
+- Auto SL/TP based on ATR
+- Daily report
+- Max 5 open trades
+- Filters: volume > 1M, price > 0.01
 
-## Bot Commands (Buttons)
+## Bot Commands
 
-- Status - Show bot status
+- /start - Show menu
+- Status - Bot status
 - Settings - Configure strategy
 - Balance - USDT balance
-- Open Trades - Active trades
-- History - Trade history
-- Start - Start bot
-- Stop - Stop bot
-- Manual Check - Check signal now
+- Scan Market - Manual scan
+- Opportunities - View signals
+- Start/Stop - Auto trading
+- History - Trade log
+- Report - Daily P&L
 
-## Settings (from bot)
+## Settings
 
 - Trade Amount (USDT)
-- Timeframe (1m, 5m, 15m, 30m, 1h, 4h)
-- Symbol (BTC_USDT, etc.)
+- Timeframe (15m, 30m, 1h, 4h, 1d)
 - SL Multiplier (x ATR)
 - TP Multiplier (x ATR)
-- EMA Length
 - Pullback %
-- Long Only (Yes/No)
-
-## Files
-
-- bot.py - Main bot
-- strategy.py - VWAP strategy
-- exchange.py - Gate.io API
-- database.py - PostgreSQL
-- config.py - Settings
+- EMA Length
+- Max Open Trades
+- Long Only mode

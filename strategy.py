@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 
 class VWAPStrategy:
-    def __init__(self, ema_len=34, ema_slope_len=3, pullback_dist=0.15, 
+    def __init__(self, ema_len=34, ema_slope_len=3, pullback_dist=0.5, 
                  atr_len=14, sl_mult=2.0, tp_mult=2.0, long_only=True):
         self.ema_len = ema_len
         self.ema_slope_len = ema_slope_len
@@ -54,7 +54,7 @@ class VWAPStrategy:
 
     def analyze(self, candles):
         if len(candles) < max(self.ema_len, self.atr_len) + 10:
-            return {"signal": None, "reason": "Insufficient data"}
+            return {"signal": None, "reason": "Insufficient data", "strength": 0}
 
         closes = [c["close"] for c in candles]
         highs = [c["high"] for c in candles]
@@ -75,13 +75,10 @@ class VWAPStrategy:
         curr_atr = atr[i]
 
         if curr_ema20 is None or curr_atr == 0:
-            return {"signal": None, "reason": "Indicators not ready"}
+            return {"signal": None, "reason": "Indicators not ready", "strength": 0}
 
         prev_ema20 = ema20[i - self.ema_slope_len] if i >= self.ema_slope_len else curr_ema20
         ema_slope = curr_ema20 - prev_ema20
-
-        ema_bull = curr_ema9 > curr_ema20 if curr_ema9 else False
-        ema_bear = curr_ema9 < curr_ema20 if curr_ema9 else False
 
         bull_trend = curr_close > curr_vwap and ema_slope > 0
         bear_trend = curr_close < curr_vwap and ema_slope < 0 and not self.long_only
@@ -97,22 +94,25 @@ class VWAPStrategy:
                     was_near_vwap = True
                     break
 
-        bounce_long = was_near_vwap and curr_close > curr_vwap and curr_close > highs[i-1]
-        bounce_short = was_near_vwap and curr_close < curr_vwap and curr_close < lows[i-1]
+        bounce_long = was_near_vwap and curr_close > curr_vwap
+        bounce_short = was_near_vwap and curr_close < curr_vwap
 
         signal = None
         entry_price = curr_close
         stop_loss = None
         take_profit = None
+        strength = 0
 
         if bull_trend and bounce_long:
             signal = "LONG"
             stop_loss = curr_close - curr_atr * self.sl_mult
             take_profit = curr_close + curr_atr * self.tp_mult
+            strength = min(100, (ema_slope / curr_ema20 * 100) * 10 + 50)
         elif bear_trend and bounce_short:
             signal = "SHORT"
             stop_loss = curr_close + curr_atr * self.sl_mult
             take_profit = curr_close - curr_atr * self.tp_mult
+            strength = min(100, (abs(ema_slope) / curr_ema20 * 100) * 10 + 50)
 
         return {
             "signal": signal,
@@ -124,10 +124,10 @@ class VWAPStrategy:
             "ema_slope": ema_slope,
             "atr": curr_atr,
             "vwap_dist": vwap_dist,
-            "near_vwap": near_vwap,
             "bull_trend": bull_trend,
             "bear_trend": bear_trend,
             "stop_loss": stop_loss,
             "take_profit": take_profit,
-            "reason": "Trend: " + ("BULL" if bull_trend else "BEAR" if bear_trend else "NEUTRAL") + ", VWAP dist: " + str(round(vwap_dist, 2)) + "%"
+            "strength": strength,
+            "reason": "Trend: " + ("BULL" if bull_trend else "BEAR" if bear_trend else "NEUTRAL") + ", VWAP dist: " + str(round(vwap_dist, 2)) + "%, Strength: " + str(round(strength, 1))
         }
