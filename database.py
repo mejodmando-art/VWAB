@@ -8,6 +8,12 @@ class Database:
 
     def init_tables(self):
         with self.conn.cursor() as cur:
+            cur.execute("DROP TABLE IF EXISTS settings CASCADE")
+            cur.execute("DROP TABLE IF EXISTS trades CASCADE")
+            cur.execute("DROP TABLE IF EXISTS daily_trades CASCADE")
+            cur.execute("DROP TABLE IF EXISTS signals CASCADE")
+            cur.execute("DROP TABLE IF EXISTS top_coins CASCADE")
+
             cur.execute("CREATE TABLE IF NOT EXISTS settings (id SERIAL PRIMARY KEY, chat_id BIGINT UNIQUE, trade_amount DECIMAL(20,8) DEFAULT 50.0, max_trades_day INT DEFAULT 20, sl_mult DECIMAL(5,2) DEFAULT 2.0, tp_mult DECIMAL(5,2) DEFAULT 2.0, long_only BOOLEAN DEFAULT true, ema_fast INT DEFAULT 9, ema_slow INT DEFAULT 21, max_open_trades INT DEFAULT 5, active BOOLEAN DEFAULT false, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
             cur.execute("CREATE TABLE IF NOT EXISTS trades (id SERIAL PRIMARY KEY, chat_id BIGINT, symbol VARCHAR(20), side VARCHAR(10), entry_price DECIMAL(20,8), stop_loss DECIMAL(20,8), take_profit DECIMAL(20,8), amount DECIMAL(20,8), status VARCHAR(20) DEFAULT 'OPEN', pnl DECIMAL(20,8) DEFAULT 0, opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, closed_at TIMESTAMP, close_price DECIMAL(20,8), atr DECIMAL(20,8), ema9 DECIMAL(20,8), ema21 DECIMAL(20,8))")
             cur.execute("CREATE TABLE IF NOT EXISTS daily_trades (id SERIAL PRIMARY KEY, chat_id BIGINT, trade_date DATE DEFAULT CURRENT_DATE, count INT DEFAULT 0, UNIQUE(chat_id, trade_date))")
@@ -24,11 +30,17 @@ class Database:
                     cur.execute("INSERT INTO settings (chat_id) VALUES (%s) RETURNING *", (chat_id,))
                     self.conn.commit()
                     row = cur.fetchone()
+                # id=0, chat_id=1, trade_amount=2, max_trades_day=3, sl_mult=4, tp_mult=5, long_only=6, ema_fast=7, ema_slow=8, max_open_trades=9, active=10, created_at=11
                 return {
-                    'trade_amount': float(row[2]), 'max_trades_day': row[3],
-                    'sl_mult': float(row[4]), 'tp_mult': float(row[5]),
-                    'long_only': row[6], 'ema_fast': row[7], 'ema_slow': row[8],
-                    'max_open_trades': row[9], 'active': row[10]
+                    'trade_amount': float(row[2]),
+                    'max_trades_day': row[3],
+                    'sl_mult': float(row[4]),
+                    'tp_mult': float(row[5]),
+                    'long_only': row[6],
+                    'ema_fast': row[7],
+                    'ema_slow': row[8],
+                    'max_open_trades': row[9],
+                    'active': row[10]
                 }
         except Exception as e:
             self.conn.rollback()
