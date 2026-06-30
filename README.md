@@ -1,7 +1,7 @@
-# VWAP Trend Momentum Bot - Final Version
+# EMA 9/21 Crossover Bot
 
-Auto trading bot for Gate.io Spot using VWAP + EMA + ATR strategy.
-Scans top 100 coins and auto-enters trades.
+Auto trading bot for Gate.io Spot using EMA 9/21 crossover strategy.
+Scans top 500 coins and auto-enters trades on 1H timeframe with 4H confirmation.
 
 ## Railway Variables (5 only)
 
@@ -13,14 +13,21 @@ Scans top 100 coins and auto-enters trades.
 | GATEIO_API_SECRET | Gate.io API | API Secret |
 | DATABASE_URL | Supabase/Neon | Database URL |
 
+## Strategy
+
+- EMA 9 crosses EMA 21 on 1H timeframe
+- Confirmed by 4H timeframe trend
+- Auto SL/TP based on ATR
+- Spot trading only
+
 ## Features
 
-- Scans top 100 coins by volume
+- Scans top 500 coins by volume
+- Filters: volume > 500K, price > 0.001
 - Auto-enters trades on signals
-- Auto SL/TP based on ATR
-- Daily report
 - Max 5 open trades
-- Filters: volume > 1M, price > 0.01
+- Daily report
+- Manual scan button
 
 ## Bot Commands
 
@@ -28,7 +35,7 @@ Scans top 100 coins and auto-enters trades.
 - Status - Bot status
 - Settings - Configure strategy
 - Balance - USDT balance
-- Scan Market - Manual scan
+- Scan 500 Coins - Manual scan
 - Opportunities - View signals
 - Start/Stop - Auto trading
 - History - Trade log
@@ -37,10 +44,7 @@ Scans top 100 coins and auto-enters trades.
 ## Settings
 
 - Trade Amount (USDT)
-- Timeframe (15m, 30m, 1h, 4h, 1d)
 - SL Multiplier (x ATR)
 - TP Multiplier (x ATR)
-- Pullback %
-- EMA Length
 - Max Open Trades
 - Long Only mode

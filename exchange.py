@@ -38,17 +38,17 @@ class GateIO:
                 return float(acc.get("available", 0))
         return 0.0
 
-    def get_top_coins(self, limit=100):
-        """Get top coins by volume"""
+    def get_top_coins(self, limit=500):
+        """Get top 500 coins by volume"""
         resp = requests.get(self.BASE_URL + "/spot/tickers", timeout=10)
         data = resp.json()
         coins = []
         for item in data:
             symbol = item.get("currency_pair", "")
-            if symbol.endswith("_USDT") and not symbol.startswith("3") and not symbol.startswith("5"):
+            if symbol.endswith("_USDT") and not any(symbol.startswith(x) for x in ["3", "5", "1", "2"]):
                 volume = float(item.get("quote_volume", 0))
                 price = float(item.get("last", 0))
-                if volume > 1000000 and price > 0.01:  # Min 1M volume, price > 0.01
+                if volume > 500000 and price > 0.001:
                     coins.append({
                         "symbol": symbol,
                         "volume": volume,
@@ -92,14 +92,4 @@ class GateIO:
         body = json.dumps(body_dict)
         headers = self._sign("POST", "/api/v4/spot/orders", "", body)
         resp = requests.post(self.BASE_URL + "/spot/orders", headers=headers, data=body, timeout=10)
-        return resp.json()
-
-    def get_open_orders(self, symbol=None):
-        if symbol:
-            params = "currency_pair=" + symbol
-            headers = self._sign("GET", "/api/v4/spot/open_orders", params)
-            resp = requests.get(self.BASE_URL + "/spot/open_orders?" + params, headers=headers, timeout=10)
-        else:
-            headers = self._sign("GET", "/api/v4/spot/open_orders")
-            resp = requests.get(self.BASE_URL + "/spot/open_orders", headers=headers, timeout=10)
         return resp.json()

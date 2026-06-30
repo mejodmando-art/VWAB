@@ -8,10 +8,10 @@ class Database:
 
     def init_tables(self):
         with self.conn.cursor() as cur:
-            cur.execute("CREATE TABLE IF NOT EXISTS settings (id SERIAL PRIMARY KEY, chat_id BIGINT UNIQUE, symbol VARCHAR(20) DEFAULT 'BTC_USDT', timeframe VARCHAR(10) DEFAULT '1h', trade_amount DECIMAL(20,8) DEFAULT 50.0, max_trades_day INT DEFAULT 10, sl_mult DECIMAL(5,2) DEFAULT 2.0, tp_mult DECIMAL(5,2) DEFAULT 2.0, long_only BOOLEAN DEFAULT true, ema_len INT DEFAULT 34, pullback_dist DECIMAL(5,2) DEFAULT 0.5, active BOOLEAN DEFAULT false, max_open_trades INT DEFAULT 5, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
-            cur.execute("CREATE TABLE IF NOT EXISTS trades (id SERIAL PRIMARY KEY, chat_id BIGINT, symbol VARCHAR(20), side VARCHAR(10), entry_price DECIMAL(20,8), stop_loss DECIMAL(20,8), take_profit DECIMAL(20,8), amount DECIMAL(20,8), status VARCHAR(20) DEFAULT 'OPEN', pnl DECIMAL(20,8) DEFAULT 0, opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, closed_at TIMESTAMP, close_price DECIMAL(20,8), atr DECIMAL(20,8))")
+            cur.execute("CREATE TABLE IF NOT EXISTS settings (id SERIAL PRIMARY KEY, chat_id BIGINT UNIQUE, trade_amount DECIMAL(20,8) DEFAULT 50.0, max_trades_day INT DEFAULT 20, sl_mult DECIMAL(5,2) DEFAULT 2.0, tp_mult DECIMAL(5,2) DEFAULT 2.0, long_only BOOLEAN DEFAULT true, ema_fast INT DEFAULT 9, ema_slow INT DEFAULT 21, max_open_trades INT DEFAULT 5, active BOOLEAN DEFAULT false, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+            cur.execute("CREATE TABLE IF NOT EXISTS trades (id SERIAL PRIMARY KEY, chat_id BIGINT, symbol VARCHAR(20), side VARCHAR(10), entry_price DECIMAL(20,8), stop_loss DECIMAL(20,8), take_profit DECIMAL(20,8), amount DECIMAL(20,8), status VARCHAR(20) DEFAULT 'OPEN', pnl DECIMAL(20,8) DEFAULT 0, opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, closed_at TIMESTAMP, close_price DECIMAL(20,8), atr DECIMAL(20,8), ema9 DECIMAL(20,8), ema21 DECIMAL(20,8))")
             cur.execute("CREATE TABLE IF NOT EXISTS daily_trades (id SERIAL PRIMARY KEY, chat_id BIGINT, trade_date DATE DEFAULT CURRENT_DATE, count INT DEFAULT 0, UNIQUE(chat_id, trade_date))")
-            cur.execute("CREATE TABLE IF NOT EXISTS signals (id SERIAL PRIMARY KEY, chat_id BIGINT, symbol VARCHAR(20), signal_type VARCHAR(10), price DECIMAL(20,8), vwap DECIMAL(20,8), ema_slope DECIMAL(20,8), atr DECIMAL(20,8), strength DECIMAL(5,2), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+            cur.execute("CREATE TABLE IF NOT EXISTS signals (id SERIAL PRIMARY KEY, chat_id BIGINT, symbol VARCHAR(20), signal_type VARCHAR(10), price DECIMAL(20,8), ema9 DECIMAL(20,8), ema21 DECIMAL(20,8), atr DECIMAL(20,8), strength DECIMAL(5,2), timeframe VARCHAR(10), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
             cur.execute("CREATE TABLE IF NOT EXISTS top_coins (symbol VARCHAR(20) PRIMARY KEY, volume_24h DECIMAL(20,2), price DECIMAL(20,8), updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
             self.conn.commit()
 
@@ -25,10 +25,10 @@ class Database:
                     self.conn.commit()
                     row = cur.fetchone()
                 return {
-                    'symbol': row[2], 'timeframe': row[3], 'trade_amount': float(row[4]),
-                    'max_trades_day': row[5], 'sl_mult': float(row[6]), 'tp_mult': float(row[7]),
-                    'long_only': row[8], 'ema_len': row[9], 'pullback_dist': float(row[10]),
-                    'active': row[11], 'max_open_trades': row[12]
+                    'trade_amount': float(row[2]), 'max_trades_day': row[3],
+                    'sl_mult': float(row[4]), 'tp_mult': float(row[5]),
+                    'long_only': row[6], 'ema_fast': row[7], 'ema_slow': row[8],
+                    'max_open_trades': row[9], 'active': row[10]
                 }
         except Exception as e:
             self.conn.rollback()
@@ -62,10 +62,10 @@ class Database:
         except Exception as e:
             self.conn.rollback()
 
-    def add_trade(self, chat_id, symbol, side, entry, sl, tp, amount, atr):
+    def add_trade(self, chat_id, symbol, side, entry, sl, tp, amount, atr, ema9, ema21):
         try:
             with self.conn.cursor() as cur:
-                cur.execute("INSERT INTO trades (chat_id, symbol, side, entry_price, stop_loss, take_profit, amount, atr) VALUES (%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id", (chat_id, symbol, side, entry, sl, tp, amount, atr))
+                cur.execute("INSERT INTO trades (chat_id, symbol, side, entry_price, stop_loss, take_profit, amount, atr, ema9, ema21) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id", (chat_id, symbol, side, entry, sl, tp, amount, atr, ema9, ema21))
                 self.conn.commit()
                 return cur.fetchone()[0]
         except Exception as e:
@@ -117,10 +117,10 @@ class Database:
             self.conn.rollback()
             return 0
 
-    def add_signal(self, chat_id, symbol, signal_type, price, vwap, ema_slope, atr, strength):
+    def add_signal(self, chat_id, symbol, signal_type, price, ema9, ema21, atr, strength, timeframe):
         try:
             with self.conn.cursor() as cur:
-                cur.execute("INSERT INTO signals (chat_id, symbol, signal_type, price, vwap, ema_slope, atr, strength) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", (chat_id, symbol, signal_type, price, vwap, ema_slope, atr, strength))
+                cur.execute("INSERT INTO signals (chat_id, symbol, signal_type, price, ema9, ema21, atr, strength, timeframe) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)", (chat_id, symbol, signal_type, price, ema9, ema21, atr, strength, timeframe))
                 self.conn.commit()
         except Exception as e:
             self.conn.rollback()
@@ -135,7 +135,7 @@ class Database:
         except Exception as e:
             self.conn.rollback()
 
-    def get_top_coins(self, limit=100):
+    def get_top_coins(self, limit=500):
         try:
             with self.conn.cursor() as cur:
                 cur.execute("SELECT symbol FROM top_coins ORDER BY volume_24h DESC LIMIT %s", (limit,))

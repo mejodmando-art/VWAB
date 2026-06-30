@@ -1,12 +1,9 @@
 from typing import Dict, List, Optional
 
-class VWAPStrategy:
-    def __init__(self, ema_len=34, ema_slope_len=3, pullback_dist=0.5, 
-                 atr_len=14, sl_mult=2.0, tp_mult=2.0, long_only=True):
-        self.ema_len = ema_len
-        self.ema_slope_len = ema_slope_len
-        self.pullback_dist = pullback_dist
-        self.atr_len = atr_len
+class EMA9Cross21Strategy:
+    def __init__(self, ema_fast=9, ema_slow=21, sl_mult=2.0, tp_mult=2.0, long_only=True):
+        self.ema_fast = ema_fast
+        self.ema_slow = ema_slow
         self.sl_mult = sl_mult
         self.tp_mult = tp_mult
         self.long_only = long_only
@@ -21,7 +18,7 @@ class VWAPStrategy:
         result = [None] * (period - 1) + ema
         return result
 
-    def _atr(self, highs, lows, closes, period):
+    def _atr(self, highs, lows, closes, period=14):
         if len(closes) < period + 1:
             return [0] * len(closes)
         trs = []
@@ -38,96 +35,85 @@ class VWAPStrategy:
         result = [0] * (period) + atr
         return result
 
-    def _vwap(self, candles):
-        vwap = []
-        cum_tp_vol = 0.0
-        cum_vol = 0.0
-
-        for c in candles:
-            tp = (c["high"] + c["low"] + c["close"]) / 3.0
-            vol = max(c["volume"], 1.0)
-            cum_tp_vol += tp * vol
-            cum_vol += vol
-            vwap.append(cum_tp_vol / cum_vol if cum_vol > 0 else c["close"])
-
-        return vwap
-
-    def analyze(self, candles):
-        if len(candles) < max(self.ema_len, self.atr_len) + 10:
+    def analyze_1h(self, candles_1h, candles_4h):
+        """Analyze 1H candles with 4H confirmation"""
+        if len(candles_1h) < self.ema_slow + 10 or len(candles_4h) < self.ema_slow + 5:
             return {"signal": None, "reason": "Insufficient data", "strength": 0}
 
-        closes = [c["close"] for c in candles]
-        highs = [c["high"] for c in candles]
-        lows = [c["low"] for c in candles]
+        closes_1h = [c["close"] for c in candles_1h]
+        highs_1h = [c["high"] for c in candles_1h]
+        lows_1h = [c["low"] for c in candles_1h]
 
-        vwap = self._vwap(candles)
-        ema9 = self._ema(closes, 9)
-        ema20 = self._ema(closes, self.ema_len)
-        ema50 = self._ema(closes, 50)
-        atr = self._atr(highs, lows, closes, self.atr_len)
+        closes_4h = [c["close"] for c in candles_4h]
 
-        i = len(candles) - 1
-        curr_close = closes[i]
-        curr_vwap = vwap[i]
-        curr_ema9 = ema9[i]
-        curr_ema20 = ema20[i]
-        curr_ema50 = ema50[i]
-        curr_atr = atr[i]
+        # Calculate EMAs for 1H
+        ema9_1h = self._ema(closes_1h, self.ema_fast)
+        ema21_1h = self._ema(closes_1h, self.ema_slow)
+        atr_1h = self._atr(highs_1h, lows_1h, closes_1h)
 
-        if curr_ema20 is None or curr_atr == 0:
+        # Calculate EMAs for 4H (confirmation)
+        ema9_4h = self._ema(closes_4h, self.ema_fast)
+        ema21_4h = self._ema(closes_4h, self.ema_slow)
+
+        i = len(candles_1h) - 1
+        curr_close = closes_1h[i]
+        curr_ema9 = ema9_1h[i]
+        curr_ema21 = ema21_1h[i]
+        curr_atr = atr_1h[i]
+
+        if curr_ema9 is None or curr_ema21 is None or curr_atr == 0:
             return {"signal": None, "reason": "Indicators not ready", "strength": 0}
 
-        prev_ema20 = ema20[i - self.ema_slope_len] if i >= self.ema_slope_len else curr_ema20
-        ema_slope = curr_ema20 - prev_ema20
+        # Previous values for crossover detection
+        prev_ema9 = ema9_1h[i-1]
+        prev_ema21 = ema21_1h[i-1]
 
-        bull_trend = curr_close > curr_vwap and ema_slope > 0
-        bear_trend = curr_close < curr_vwap and ema_slope < 0 and not self.long_only
+        if prev_ema9 is None or prev_ema21 is None:
+            return {"signal": None, "reason": "Need more history", "strength": 0}
 
-        vwap_dist = abs(curr_close - curr_vwap) / curr_close * 100 if curr_vwap else 99.0
-        near_vwap = vwap_dist <= self.pullback_dist
+        # Crossover detection
+        cross_up = prev_ema9 <= prev_ema21 and curr_ema9 > curr_ema21
+        cross_down = prev_ema9 >= prev_ema21 and curr_ema9 < curr_ema21
 
-        was_near_vwap = near_vwap
-        for j in range(1, 4):
-            if i - j >= 0 and curr_vwap:
-                dist = abs(closes[i-j] - curr_vwap) / closes[i-j] * 100
-                if dist <= self.pullback_dist:
-                    was_near_vwap = True
-                    break
+        # 4H confirmation
+        j = len(candles_4h) - 1
+        confirm_bull = False
+        confirm_bear = False
 
-        bounce_long = was_near_vwap and curr_close > curr_vwap
-        bounce_short = was_near_vwap and curr_close < curr_vwap
+        if ema9_4h[j] is not None and ema21_4h[j] is not None:
+            confirm_bull = ema9_4h[j] > ema21_4h[j]
+            confirm_bear = ema9_4h[j] < ema21_4h[j]
 
+        # Signal generation
         signal = None
-        entry_price = curr_close
         stop_loss = None
         take_profit = None
         strength = 0
 
-        if bull_trend and bounce_long:
+        if cross_up and confirm_bull:
             signal = "LONG"
             stop_loss = curr_close - curr_atr * self.sl_mult
             take_profit = curr_close + curr_atr * self.tp_mult
-            strength = min(100, (ema_slope / curr_ema20 * 100) * 10 + 50)
-        elif bear_trend and bounce_short:
+            strength = 50 + ((curr_ema9 - curr_ema21) / curr_ema21 * 100) * 5
+        elif cross_down and confirm_bear and not self.long_only:
             signal = "SHORT"
             stop_loss = curr_close + curr_atr * self.sl_mult
             take_profit = curr_close - curr_atr * self.tp_mult
-            strength = min(100, (abs(ema_slope) / curr_ema20 * 100) * 10 + 50)
+            strength = 50 + ((curr_ema21 - curr_ema9) / curr_ema21 * 100) * 5
+
+        strength = min(100, max(0, strength))
 
         return {
             "signal": signal,
             "price": curr_close,
-            "vwap": curr_vwap,
             "ema9": curr_ema9,
-            "ema20": curr_ema20,
-            "ema50": curr_ema50,
-            "ema_slope": ema_slope,
+            "ema21": curr_ema21,
             "atr": curr_atr,
-            "vwap_dist": vwap_dist,
-            "bull_trend": bull_trend,
-            "bear_trend": bear_trend,
             "stop_loss": stop_loss,
             "take_profit": take_profit,
             "strength": strength,
-            "reason": "Trend: " + ("BULL" if bull_trend else "BEAR" if bear_trend else "NEUTRAL") + ", VWAP dist: " + str(round(vwap_dist, 2)) + "%, Strength: " + str(round(strength, 1))
+            "cross_up": cross_up,
+            "cross_down": cross_down,
+            "confirm_4h": confirm_bull if cross_up else confirm_bear,
+            "reason": "1H EMA9/21 " + ("Cross Up" if cross_up else "Cross Down" if cross_down else "No Cross") + " | 4H: " + ("Bull" if confirm_bull else "Bear" if confirm_bear else "Neutral")
         }
